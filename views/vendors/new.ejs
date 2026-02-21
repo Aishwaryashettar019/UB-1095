@@ -1,0 +1,52 @@
+<% layout('layouts/boilerplate2') %>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h2 class="text-success mb-4 text-center">Add a New Vendor</h2>
+              <% if (error) { %>
+  <script>
+    alert("<%= error %>");
+  </script>
+<% } %>
+            <form action="/vendors" method="POST">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Vendor Name</label>
+                <input type="text" name="name" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Fertilizer Sold</label>
+                <input type="text" name="fertilizer" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Cost (₹ per kg)</label>
+                <input type="number" name="cost" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Contact Details</label>
+                <input type="text" name="contact" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Location (optional)</label>
+                <input type="text" name="location" class="form-control">
+              </div>
+
+              <button type="submit" class="btn btn-success w-100 fw-semibold py-2">
+                Submit
+              </button>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<% layout('layouts/boilerplate') %>
+<body>
+    <h3>Crop Listings</h3>
+<div class="row row-cols-lg-3 row-cols-md-3 row-cols-sm-3 crop">
+ <% for(let listing of allListings) { %>
+
+
+ 
+
+<a href="/croplistings/<%= listing._id %>" class="listing-link">
+  <div class="card col">
+<img src="<%- listing.image || '/images/defaultcrop.jpg' %>"
+     class="card-img-top"
+     alt="<%= listing.title %>"
+     style="height: 20rem; object-fit: cover;"
+     onerror="this.onerror=null; this.src='/images/defaultcrop.jpg';">
+
+    <div class="card-img-overlay text-white" >
+      
+    </div>
+    <div class="card-body">
+      <p class="card-text">
+        <b><%= listing.title %></b><br>
+        &#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : "0" %> / Kg
+
+      </p>
+    </div>
+  </div>
+</a>
+
+<%  }%>
+
+  </div>
+
+
+
+
+</body>
+</html>
+
+

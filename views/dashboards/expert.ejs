@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expert Dashboard | CropCare</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f3f0ff; font-family: 'Segoe UI', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #4a0080, #6f42c1); min-height: 100vh; color: white; padding: 20px 0; }
+    .sidebar a { color: rgba(255,255,255,0.9); text-decoration: none; display: block; padding: 10px 20px; border-radius: 8px; margin: 3px 10px; transition: 0.2s; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.2); }
+    .sidebar .brand { font-size: 1.4rem; font-weight: 700; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px; }
+    .stat-card { border-radius: 16px; padding: 24px; color: white; position: relative; overflow: hidden; }
+    .stat-card .icon { font-size: 2.5rem; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
+    .data-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 15px rgba(0,0,0,0.08); }
+    .q-card { border-left: 4px solid #6f42c1; background: #faf8ff; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+    .q-card:hover { background: #f0ebff; }
+    .mic-btn { width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; border: none; background: #6f42c1; color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(111,66,193,0.4); }
+    .mic-btn.recording { background: #dc3545; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,53,69,0.4)} 50%{box-shadow:0 0 0 15px rgba(220,53,69,0)} }
+    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <div class="col-md-2 sidebar">
+      <div class="brand">🌿 CropCare</div>
+      <div class="px-2 mb-3">
+        <small class="text-white-50">Expert Panel</small><br>
+        <strong><%= user.username %></strong>
+        <span class="badge" style="background:#a78bfa;">Expert</span>
+      </div>
+      <a href="/dashboard" class="active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+      <a href="/qa"><i class="fa fa-comments me-2"></i>All Questions</a>
+      <a href="/qa/new"><i class="fa fa-plus me-2"></i>Post Question</a>
+      <a href="/croplistings"><i class="fa fa-seedling me-2"></i>Crop Listings</a>
+      <a href="/schemes"><i class="fa fa-file-alt me-2"></i>Govt Schemes</a>
+      <hr style="border-color: rgba(255,255,255,0.2);">
+      <a href="/logout"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h3 class="mb-1 fw-bold" style="color:#6f42c1;">🧑‍🔬 Expert Dashboard</h3>
+      <p class="text-muted mb-4">Answer farmer queries and help the community grow</p>
+
+      <% if (flash_success) { %><div class="flash-success"><%= flash_success %></div><% } %>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card" style="background:linear-gradient(135deg,#6f42c1,#a78bfa);">
+            <div class="fs-5 fw-bold"><%= stats.questions %></div>
+            <div>Total Questions</div>
+            <div class="icon"><i class="fa fa-question-circle"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card" style="background:linear-gradient(135deg,#2a8a15,#4CAF50);">
+            <div class="fs-5 fw-bold"><%= stats.listings %></div>
+            <div>Crop Listings</div>
+            <div class="icon"><i class="fa fa-seedling"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card" style="background:linear-gradient(135deg,#0d6efd,#42a5f5);">
+            <div class="fs-5 fw-bold"><%= stats.vendors %></div>
+            <div>Vendors</div>
+            <div class="icon"><i class="fa fa-store"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <a href="/qa/new" class="btn btn-lg w-100 h-100" style="background:linear-gradient(135deg,#4a0080,#6f42c1);color:white;border-radius:16px;">
+            <i class="fa fa-reply d-block fs-2 mb-1"></i>Answer a Question
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Voice Input for Experts -->
+        <div class="col-md-4">
+          <div class="data-card">
+            <h5 class="fw-bold mb-2" style="color:#6f42c1;"><i class="fa fa-microphone me-2"></i>Voice Answer Input</h5>
+            <p class="text-muted small">Speak your answer in any language!</p>
+            <div class="d-flex gap-3 align-items-center mb-3">
+              <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+                <i class="fa fa-microphone" id="micIcon"></i>
+              </button>
+              <div id="micStatus">Click mic to start</div>
+            </div>
+            <select class="form-select form-select-sm mb-2" id="langSelect">
+              <option value="">Auto-detect</option>
+              <option value="hi-IN">Hindi (हिंदी)</option>
+              <option value="te-IN">Telugu (తెలుగు)</option>
+              <option value="ta-IN">Tamil (தமிழ்)</option>
+              <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+              <option value="mr-IN">Marathi (मराठी)</option>
+              <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+              <option value="en-IN">English</option>
+            </select>
+            <textarea class="form-control" id="voiceText" rows="4" placeholder="Your answer appears here..."></textarea>
+            <div class="mt-2 d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" onclick="clearVoice()">Clear</button>
+              <button class="btn btn-sm" style="background:#6f42c1;color:white;" onclick="goToQA()">Use in Q&amp;A →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Questions -->
+        <div class="col-md-8">
+          <div class="data-card">
+            <h5 class="fw-bold mb-3"><i class="fa fa-inbox" style="color:#6f42c1;"></i> Unanswered Questions</h5>
+            <% const unanswered = pendingQuestions.filter(q => q.answers.length === 0); %>
+            <% if(unanswered.length > 0) { %>
+              <% unanswered.forEach(q => { %>
+                <div class="q-card">
+                  <div class="fw-semibold"><%= q.title %></div>
+                  <div class="text-muted small mt-1"><%= (q.description || '').substring(0, 100) %>...</div>
+                  <div class="mt-2 d-flex gap-2 align-items-center">
+                    <% if (q.tags) { %><% q.tags.forEach(t => { %><span class="badge bg-light text-dark border"><%= t %></span><% }) %><% } %>
+                    <a href="/qa/<%= q._id %>" class="btn btn-sm ms-auto" style="background:#6f42c1;color:white;">Answer Now</a>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <p class="text-muted">🎉 All questions have been answered!</p>
+            <% } %>
+            
+            <h5 class="fw-bold mb-3 mt-4"><i class="fa fa-check-circle text-success me-2"></i>Recent Questions</h5>
+            <% pendingQuestions.slice(0,5).forEach(q => { %>
+              <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <div class="fw-semibold small"><%= q.title %></div>
+                <div>
+                  <span class="badge <%= q.answers.length > 0 ? 'bg-success' : 'bg-warning text-dark' %>">
+                    <%= q.answers.length %> answer<%= q.answers.length !== 1 ? 's' : '' %>
+                  </span>
+                  <a href="/qa/<%= q._id %>" class="btn btn-sm btn-outline-secondary ms-2">View</a>
+                </div>
+              </div>
+            <% }) %>
+            <a href="/qa" class="btn btn-sm mt-3" style="background:#6f42c1;color:white;">View All Questions</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let recognition = null, isRecording = false;
+function toggleRecording() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome/Edge.'); return; }
+  if (isRecording) { recognition.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true;
+  recognition.lang = document.getElementById('langSelect').value || 'en-IN';
+  recognition.onstart = () => { isRecording=true; document.getElementById('micBtn').classList.add('recording'); document.getElementById('micIcon').className='fa fa-stop'; document.getElementById('micStatus').textContent='🔴 Listening...'; };
+  recognition.onresult = (e) => { let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; document.getElementById('voiceText').value=t; };
+  recognition.onerror = (e) => stopRec();
+  recognition.onend = stopRec;
+  recognition.start();
+}
+function stopRec() { isRecording=false; document.getElementById('micBtn').classList.remove('recording'); document.getElementById('micIcon').className='fa fa-microphone'; document.getElementById('micStatus').textContent='Done!'; }
+function clearVoice() { document.getElementById('voiceText').value=''; document.getElementById('micStatus').textContent='Click mic to start'; }
+function goToQA() { window.location.href='/qa/new?prefill='+encodeURIComponent(document.getElementById('voiceText').value); }
+</script>
+</body>
+</html>

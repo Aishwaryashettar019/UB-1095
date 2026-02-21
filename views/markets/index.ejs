@@ -1,0 +1,170 @@
+<% layout('layouts/boilerplate2') %>
+
+
+<div class="container my-5">
+  <div class="text-center mb-4">
+    <h1 class="fw-bold text-success">🗺️ Nearby Marketplaces</h1>
+    <p class="text-muted">Find the nearest agricultural marketplaces and mandi locations in your district.</p>
+  </div>
+
+  <!-- Filter Form -->
+  <form action="/markets" method="GET" class="row g-3 mb-4 justify-content-center">
+    <div class="col-md-6">
+      <input type="text" name="district" value="<%= district || '' %>" class="form-control" placeholder="Enter your district">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100">Filter</button>
+    </div>
+    <div class="col-md-2">
+      <a href="/markets" class="btn btn-secondary w-100">Clear</a>
+    </div>
+    <div class="col-md-2">
+      <a href="/markets/new" class="btn btn-primary w-100">➕ Add Market</a>
+    </div>
+  </form>
+
+  <!-- Map -->
+  <div id="map" class="shadow-sm border rounded-4 mb-5" style="width:100%; height:500px;"></div>
+
+  <!-- Market List -->
+  <h3 class="text-success mb-3 text-center">Market List</h3>
+  <div id="market-list" class="row justify-content-center"></div>
+</div>
+
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  const markets = <%- JSON.stringify(markets || []) %>;
+
+  function haversineDistance(lat1, lon1, lat2, lon2) {
+    const toRad = x => x * Math.PI / 180;
+    const R = 6371; // km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  }
+
+  function updateMarketList(userLat, userLng) {
+    const marketsWithDist = markets.map(m => ({
+      ...m,
+      distance: (m.latitude && m.longitude && userLat && userLng)
+        ? haversineDistance(userLat, userLng, m.latitude, m.longitude)
+        : null
+    }));
+
+    marketsWithDist.sort((a,b) => {
+      if(a.distance==null && b.distance==null) return 0;
+      if(a.distance==null) return 1;
+      if(b.distance==null) return -1;
+      return a.distance-b.distance;
+    });
+
+    const list = document.getElementById("market-list");
+    list.innerHTML = "";
+
+    marketsWithDist.forEach((m, idx) => {
+      const col = document.createElement("div");
+      col.className = "col-md-4";
+
+      const badge = idx < 3 ? `
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+          🏆 Nearest
+        </span>` : "";
+
+      const distance = (typeof m.distance === "number") 
+        ? `<p><b>Distance:</b> ${m.distance.toFixed(1)} km</p>` : "";
+
+      col.innerHTML = `
+        <div class="card mb-4 shadow-sm position-relative ${idx < 3 ? 'border border-warning' : ''}">
+          ${badge}
+          <div class="card-body">
+            <h5 class="card-title text-success">${escapeHtml(m.name)}</h5>
+            <p><b>District:</b> ${escapeHtml(m.district)}</p>
+            <p><b>Address:</b> ${escapeHtml(m.address || "—")}</p>
+            <p><b>Contact:</b> ${escapeHtml(m.contact || "—")}</p>
+            ${distance}
+            ${m._id ? `
+            <form action="/markets/${m._id}?_method=DELETE" method="POST" 
+                  onsubmit="return confirm('Delete this market?');">
+              <button class="btn btn-danger btn-sm w-100">Delete</button>
+            </form>` : ""}
+          </div>
+        </div>`;
+      list.appendChild(col);
+    });
+
+    return marketsWithDist;
+  }
+
+  function initMap() {
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    const markers = [], markerGroup = L.featureGroup();
+
+    markets.forEach(m => {
+      if (m.latitude && m.longitude) {
+        const marker = L.marker([m.latitude, m.longitude], {
+          icon: L.icon({
+            iconUrl: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            iconSize:[32,32], iconAnchor:[16,32]
+          })
+        }).bindPopup(`<b>${escapeHtml(m.name)}</b><br>${escapeHtml(m.address||'')}<br>${escapeHtml(m.contact||'')}`);
+        markerGroup.addLayer(marker);
+        markers.push({marker, data:m});
+      }
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const {latitude:userLat, longitude:userLng} = pos.coords;
+
+        const userMarker = L.marker([userLat, userLng], {
+          icon:L.icon({
+            iconUrl:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            iconSize:[32,32], iconAnchor:[16,32]
+          })
+        }).bindPopup("📍 You are here");
+        markerGroup.addLayer(userMarker);
+
+        const sorted = updateMarketList(userLat, userLng);
+
+        sorted.forEach((m, i) => {
+          const mk = markers.find(obj => obj.data._id === m._id);
+          if (mk && i < 3) {
+            mk.marker.setIcon(L.icon({
+              iconUrl:"https://maps.google.com/mapfiles/ms/icons/orange-dot.png",
+              iconSize:[32,32], iconAnchor:[16,32]
+            }));
+          }
+        });
+
+        markerGroup.addTo(map);
+        map.fitBounds(markerGroup.getBounds(), {padding:[50,50]});
+      }, () => {
+        updateMarketList(null,null);
+        if(markerGroup.getLayers().length) map.fitBounds(markerGroup.getBounds(), {padding:[50,50]});
+        else map.setView([20.5937,78.9629],5);
+      });
+    } else {
+      updateMarketList(null,null);
+      if(markerGroup.getLayers().length) map.fitBounds(markerGroup.getBounds(), {padding:[50,50]});
+      else map.setView([20.5937,78.9629],5);
+    }
+  }
+
+  window.onload = initMap;
+</script>
+
+
+
+

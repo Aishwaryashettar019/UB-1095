@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard | CropCare</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f5f5f5; font-family: 'Segoe UI', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #1a1a2e, #16213e); min-height: 100vh; color: white; padding: 20px 0; }
+    .sidebar a { color: rgba(255,255,255,0.8); text-decoration: none; display: block; padding: 10px 20px; border-radius: 8px; margin: 3px 10px; transition: 0.2s; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.15); color: white; }
+    .sidebar .brand { font-size: 1.4rem; font-weight: 700; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; }
+    .stat-card { border-radius: 16px; padding: 24px; color: white; position: relative; overflow: hidden; }
+    .stat-card .icon { font-size: 2.5rem; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
+    .data-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 15px rgba(0,0,0,0.06); }
+    .role-badge-admin { background: #dc3545; color: white; }
+    .role-badge-farmer { background: #28a745; color: white; }
+    .role-badge-vendor { background: #fd7e14; color: white; }
+    .role-badge-expert { background: #6f42c1; color: white; }
+    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; }
+    .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <div class="brand">🌿 CropCare</div>
+      <div class="px-2 mb-3">
+        <small class="text-white-50">Admin Panel</small><br>
+        <strong><%= user.username %></strong>
+        <span class="badge bg-danger ms-1">Admin</span>
+      </div>
+      <a href="/dashboard" class="active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+      <a href="/croplistings"><i class="fa fa-seedling me-2"></i>Crop Listings</a>
+      <a href="/qa"><i class="fa fa-comments me-2"></i>Q&amp;A</a>
+      <a href="/vendors"><i class="fa fa-store me-2"></i>Vendors</a>
+      <a href="/schemes"><i class="fa fa-file-alt me-2"></i>Schemes</a>
+      <a href="/markets"><i class="fa fa-chart-line me-2"></i>Markets</a>
+      <hr style="border-color: rgba(255,255,255,0.15);">
+      <a href="/logout"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-10 p-4">
+      <h3 class="mb-1 fw-bold text-dark">⚙️ Admin Dashboard</h3>
+      <p class="text-muted mb-4">Full platform control & monitoring</p>
+
+      <% if (flash_success) { %><div class="flash-success"><i class="fa fa-check-circle me-2"></i><%= flash_success %></div><% } %>
+      <% if (flash_error) { %><div class="flash-error"><i class="fa fa-exclamation-circle me-2"></i><%= flash_error %></div><% } %>
+
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#dc3545,#e57373);">
+            <div class="fs-5 fw-bold"><%= stats.users %></div>
+            <div class="small">Total Users</div>
+            <div class="icon"><i class="fa fa-users"></i></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#2a8a15,#4CAF50);">
+            <div class="fs-5 fw-bold"><%= stats.listings %></div>
+            <div class="small">Listings</div>
+            <div class="icon"><i class="fa fa-seedling"></i></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#0d6efd,#4dabf7);">
+            <div class="fs-5 fw-bold"><%= stats.questions %></div>
+            <div class="small">Questions</div>
+            <div class="icon"><i class="fa fa-comments"></i></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#fd7e14,#ffa94d);">
+            <div class="fs-5 fw-bold"><%= stats.vendors %></div>
+            <div class="small">Vendors</div>
+            <div class="icon"><i class="fa fa-store"></i></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#6f42c1,#a78bfa);">
+            <div class="fs-5 fw-bold"><%= stats.schemes %></div>
+            <div class="small">Schemes</div>
+            <div class="icon"><i class="fa fa-file-alt"></i></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-card" style="background: linear-gradient(135deg,#20c997,#63e6be);">
+            <div class="fs-5 fw-bold"><%= stats.markets %></div>
+            <div class="small">Markets</div>
+            <div class="icon"><i class="fa fa-chart-bar"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Management -->
+      <div class="data-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="fa fa-users text-primary me-2"></i>User Management</h5>
+          <input type="text" class="form-control w-auto" id="userSearch" onkeyup="filterUsers()" placeholder="🔍 Search users...">
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="userTable">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% allUsers.forEach((u, i) => { %>
+                <tr>
+                  <td><%= i+1 %></td>
+                  <td><strong><%= u.username %></strong></td>
+                  <td><span class="badge role-badge-<%= u.role %>"><%= u.role.toUpperCase() %></span></td>
+                  <td><small><%= new Date(u.createdAt).toLocaleDateString() %></small></td>
+                  <td>
+                    <% if (u.username !== user.username) { %>
+                      <form action="/dashboard/admin/delete-user/<%= u._id %>?_method=POST" method="POST" onsubmit="return confirm('Delete this user?')" style="display:inline">
+                        <button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                      </form>
+                    <% } else { %>
+                      <span class="badge bg-secondary">You</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="data-card">
+        <h5 class="fw-bold mb-3"><i class="fa fa-bolt text-warning me-2"></i>Quick Actions</h5>
+        <div class="row g-2">
+          <div class="col-md-2"><a href="/schemes/new" class="btn btn-outline-success w-100"><i class="fa fa-plus me-1"></i>Add Scheme</a></div>
+          <div class="col-md-2"><a href="/markets/new" class="btn btn-outline-primary w-100"><i class="fa fa-plus me-1"></i>Add Market</a></div>
+          <div class="col-md-2"><a href="/vendors/new" class="btn btn-outline-warning w-100"><i class="fa fa-plus me-1"></i>Add Vendor</a></div>
+          <div class="col-md-2"><a href="/qa/new" class="btn btn-outline-info w-100"><i class="fa fa-plus me-1"></i>Add Q&amp;A</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function filterUsers() {
+  const val = document.getElementById('userSearch').value.toLowerCase();
+  document.querySelectorAll('#userTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

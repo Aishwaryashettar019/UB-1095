@@ -1,0 +1,37 @@
+<% layout('layouts/boilerplate2') %>
+<div class="container mt-4">
+  <h2 class="text-success mb-3">Edit Scheme</h2>
+  <form action="/schemes/<%= scheme._id %>?_method=PUT" method="POST" class="card p-4 shadow-sm">
+    <div class="mb-3">
+      <label class="form-label">Scheme Title</label>
+      <input type="text" name="title" class="form-control" value="<%= scheme.title %>" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Description</label>
+      <textarea name="description" class="form-control" rows="3" required><%= scheme.description %></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Department</label>
+      <input type="text" name="department" class="form-control" value="<%= scheme.department %>">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Subsidy / Benefit</label>
+      <input type="text" name="subsidy" class="form-control" value="<%= scheme.subsidy %>">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Eligibility</label>
+      <textarea name="eligibility" class="form-control"><%= scheme.eligibility %></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Apply Link (Govt Website)</label>
+      <input type="url" name="applyLink" class="form-control" value="<%= scheme.applyLink %>">
+    </div>
+
+    <button type="submit" class="btn btn-warning w-100">Update</button>
+  </form>
+</div>

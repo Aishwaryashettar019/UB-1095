@@ -1,0 +1,152 @@
+<% layout('layouts/boilerplate2') %>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h1 class="fw-bold text-success mb-1">🌾 Farmer Q&A Forum</h1>
+        <p class="text-muted mb-0">
+          Logged in as <strong><%= user.username %></strong>
+          <span class="badge ms-1 <%= user.role === 'expert' ? 'bg-purple' : user.role === 'admin' ? 'bg-danger' : 'bg-success' %>" style="background:<%= user.role==='expert'?'#6f42c1':user.role==='admin'?'#dc3545':'#2a8a15' %>"><%= user.role.toUpperCase() %></span>
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/qa/new" class="btn btn-success"><i class="fa fa-plus me-1"></i>Ask a Question</a>
+        <a href="/dashboard" class="btn btn-outline-secondary">← Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Voice Search Bar -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg,#f0f7ee,#e8f5e9);">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <button class="btn btn-success rounded-circle" style="width:46px;height:46px;" id="searchMicBtn" onclick="toggleSearchVoice()" title="Voice search">
+            <i class="fa fa-microphone" id="searchMicIcon"></i>
+          </button>
+          <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search questions... (or use voice)" oninput="filterQuestions()" style="max-width:400px;">
+          <select class="form-select form-select-sm" id="searchLang" style="max-width:160px;">
+            <option value="en-IN">English</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="te-IN">Telugu</option>
+            <option value="ta-IN">Tamil</option>
+            <option value="kn-IN">Kannada</option>
+            <option value="mr-IN">Marathi</option>
+          </select>
+          <span id="searchVoiceStatus" class="text-muted small"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="questionList">
+    <% if (questions.length === 0) { %>
+      <div class="text-center py-5 text-muted">
+        <i class="fa fa-comments fa-3x mb-3"></i>
+        <p>No questions yet. Be the first to ask!</p>
+      </div>
+    <% } %>
+    <% questions.forEach(q => { %>
+      <div class="card shadow-sm mb-4 q-item" data-title="<%= (q.title||'').toLowerCase() %>" data-desc="<%= (q.description||'').toLowerCase() %>">
+        <div class="card-header bg-white">
+          <details>
+            <summary class="fs-5 fw-semibold text-primary" style="cursor:pointer;">
+              <%= q.title %>
+              <span class="text-muted fs-6 ms-2">— <%= q.askedBy %></span>
+              <span class="badge ms-2 <%= q.answers.length > 0 ? 'bg-success' : 'bg-warning text-dark' %>">
+                <%= q.answers.length %> answer<%= q.answers.length !== 1 ? 's' : '' %>
+              </span>
+              <% if (q.tags && q.tags.length > 0) { %>
+                <% q.tags.forEach(tag => { %><span class="badge bg-info text-dark ms-1 small"><%= tag %></span><% }) %>
+              <% } %>
+            </summary>
+            <div class="card-body mt-3">
+              <p class="text-secondary"><%= q.description %></p>
+
+              <h5 class="mt-3 mb-2">Answers:</h5>
+              <% if (q.answers.length === 0) { %>
+                <p class="text-muted fst-italic">No answers yet. Be the first!</p>
+              <% } else { %>
+                <% q.answers.forEach(a => { %>
+                  <div class="border rounded p-3 mb-2 bg-light">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <span class="fw-bold text-success"><%= a.answeredBy %></span>
+                      <% if (a.answeredBy === user.username) { %><span class="badge bg-primary small">You</span><% } %>
+                    </div>
+                    <span class="text-dark"><%= a.content %></span>
+                  </div>
+                <% }) %>
+              <% } %>
+
+              <!-- Answer form with voice input -->
+              <div class="mt-4 p-3 bg-white border rounded shadow-sm">
+                <h6 class="fw-semibold text-success mb-3">Post Your Answer</h6>
+                <!-- Voice input for answer -->
+                <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background:#f0f7ee;">
+                  <button class="btn btn-sm btn-success rounded-circle" style="width:36px;height:36px;" onclick="toggleAnswerVoice(this, '<%= q._id %>')" title="Voice answer">
+                    <i class="fa fa-microphone"></i>
+                  </button>
+                  <select class="form-select form-select-sm" id="ansLang_<%= q._id %>" style="max-width:130px;">
+                    <option value="en-IN">English</option>
+                    <option value="hi-IN">Hindi</option>
+                    <option value="te-IN">Telugu</option>
+                    <option value="ta-IN">Tamil</option>
+                    <option value="kn-IN">Kannada</option>
+                  </select>
+                  <span class="text-muted small" id="ansVoiceStatus_<%= q._id %>">Tap mic to dictate answer</span>
+                </div>
+                <form action="/answers/<%= q._id %>" method="POST">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold small">Answering as: <span class="text-success"><%= user.username %></span></label>
+                    <textarea name="content" id="answerContent_<%= q._id %>" class="form-control" rows="3" placeholder="Write your answer..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-success w-100">Post Answer</button>
+                </form>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    <% }) %>
+    </div>
+  </div>
+</body>
+<script>
+// Question search filter
+function filterQuestions() {
+  const val = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.q-item').forEach(el => {
+    const match = el.dataset.title.includes(val) || el.dataset.desc.includes(val);
+    el.style.display = match ? '' : 'none';
+  });
+}
+
+// Voice search
+let searchRec = null, searchRecording = false;
+function toggleSearchVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome/Edge.'); return; }
+  if (searchRecording) { searchRec.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  searchRec = new SR();
+  searchRec.lang = document.getElementById('searchLang').value;
+  searchRec.onstart = () => { searchRecording=true; document.getElementById('searchMicBtn').style.background='#dc3545'; document.getElementById('searchMicIcon').className='fa fa-stop'; document.getElementById('searchVoiceStatus').textContent='🔴 Listening...'; };
+  searchRec.onresult = (e) => { document.getElementById('searchInput').value = e.results[0][0].transcript; filterQuestions(); };
+  searchRec.onerror = stopSearchRec; searchRec.onend = stopSearchRec;
+  searchRec.start();
+}
+function stopSearchRec() { searchRecording=false; document.getElementById('searchMicBtn').style.background=''; document.getElementById('searchMicIcon').className='fa fa-microphone'; document.getElementById('searchVoiceStatus').textContent=''; }
+
+// Per-answer voice input
+let ansRec = {}, ansRecording = {};
+function toggleAnswerVoice(btn, qId) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome/Edge.'); return; }
+  if (ansRecording[qId]) { ansRec[qId].stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  ansRec[qId] = new SR();
+  ansRec[qId].continuous = true; ansRec[qId].interimResults = true;
+  ansRec[qId].lang = document.getElementById('ansLang_'+qId).value;
+  ansRec[qId].onstart = () => { ansRecording[qId]=true; btn.style.background='#dc3545'; btn.querySelector('i').className='fa fa-stop'; document.getElementById('ansVoiceStatus_'+qId).textContent='🔴 Listening...'; };
+  ansRec[qId].onresult = (e) => { let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; document.getElementById('answerContent_'+qId).value=t; };
+  ansRec[qId].onerror = ()=>stopAnsRec(btn,qId); ansRec[qId].onend = ()=>stopAnsRec(btn,qId);
+  ansRec[qId].start();
+}
+function stopAnsRec(btn,qId) { ansRecording[qId]=false; btn.style.background=''; btn.querySelector('i').className='fa fa-microphone'; document.getElementById('ansVoiceStatus_'+qId).textContent='Done!'; }
+</script>

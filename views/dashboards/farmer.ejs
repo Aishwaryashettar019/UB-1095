@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farmer Dashboard | CropCare</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f7ee; font-family: 'Segoe UI', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #2a8a15, #1a5c0e); min-height: 100vh; color: white; padding: 20px 0; }
+    .sidebar a { color: rgba(255,255,255,0.85); text-decoration: none; display: block; padding: 10px 20px; border-radius: 8px; margin: 3px 10px; transition: 0.2s; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.2); color: white; }
+    .sidebar .brand { font-size: 1.4rem; font-weight: 700; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px; }
+    .stat-card { border-radius: 16px; padding: 24px; color: white; position: relative; overflow: hidden; }
+    .stat-card .icon { font-size: 2.5rem; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
+    .voice-box { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 15px rgba(0,0,0,0.08); }
+    .mic-btn { width: 70px; height: 70px; border-radius: 50%; font-size: 1.8rem; border: none; background: #2a8a15; color: white; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(42,138,21,0.4); }
+    .mic-btn.recording { background: #dc3545; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,53,69,0.4)} 50%{box-shadow:0 0 0 15px rgba(220,53,69,0)} }
+    .lang-badge { background: #e8f5e9; color: #2a8a15; border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; }
+    .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <div class="brand">🌿 CropCare</div>
+      <div class="px-2 mb-3">
+        <small class="text-white-50">Logged in as</small><br>
+        <strong><%= user.username %></strong>
+        <span class="badge bg-success ms-1">Farmer</span>
+      </div>
+      <a href="/dashboard" class="active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+      <a href="/croplistings"><i class="fa fa-seedling me-2"></i>Crop Listings</a>
+      <a href="/qa"><i class="fa fa-question-circle me-2"></i>Ask Experts</a>
+      <a href="/vendors"><i class="fa fa-store me-2"></i>Vendors</a>
+      <a href="/schemes"><i class="fa fa-file-alt me-2"></i>Govt Schemes</a>
+      <a href="/markets"><i class="fa fa-chart-line me-2"></i>Markets</a>
+      <hr style="border-color: rgba(255,255,255,0.2);">
+      <a href="/logout"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-10 p-4">
+      <h3 class="mb-1 fw-bold text-success">🌾 Farmer Dashboard</h3>
+      <p class="text-muted mb-4">Welcome, <%= user.username %>! Here's what's happening today.</p>
+
+      <% if (flash_success) { %><div class="flash-success"><i class="fa fa-check-circle me-2"></i><%= flash_success %></div><% } %>
+      <% if (flash_error) { %><div class="flash-error"><i class="fa fa-exclamation-circle me-2"></i><%= flash_error %></div><% } %>
+
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card" style="background: linear-gradient(135deg,#2a8a15,#4CAF50);">
+            <div class="fs-5 fw-bold"><%= stats.listings %></div>
+            <div>Crop Listings</div>
+            <div class="icon"><i class="fa fa-seedling"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card" style="background: linear-gradient(135deg,#0d6efd,#4dabf7);">
+            <div class="fs-5 fw-bold"><%= stats.questions %></div>
+            <div>Expert Q&amp;As</div>
+            <div class="icon"><i class="fa fa-comments"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card" style="background: linear-gradient(135deg,#fd7e14,#ffa94d);">
+            <div class="fs-5 fw-bold"><%= stats.schemes %></div>
+            <div>Govt Schemes</div>
+            <div class="icon"><i class="fa fa-file-alt"></i></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card" style="background: linear-gradient(135deg,#6f42c1,#a78bfa);">
+            <div class="fs-5 fw-bold"><%= stats.markets %></div>
+            <div>Markets</div>
+            <div class="icon"><i class="fa fa-chart-bar"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Voice Input -->
+        <div class="col-md-6">
+          <div class="voice-box">
+            <h5 class="fw-bold mb-1"><i class="fa fa-microphone text-success me-2"></i>Voice Input</h5>
+            <p class="text-muted small mb-3">Speak in any language — auto-converted to text!</p>
+            
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+                <i class="fa fa-microphone" id="micIcon"></i>
+              </button>
+              <div>
+                <div class="fw-bold" id="micStatus">Click mic to start</div>
+                <div id="detectedLang" class="lang-badge mt-1 d-none"></div>
+              </div>
+            </div>
+
+            <label class="form-label fw-semibold">Transcribed Text:</label>
+            <textarea class="form-control mb-3" id="voiceText" rows="3" placeholder="Your speech will appear here..."></textarea>
+            
+            <div class="mb-3">
+              <label class="form-label small text-muted">Language (optional override)</label>
+              <select class="form-select form-select-sm" id="langSelect">
+                <option value="">Auto-detect</option>
+                <option value="hi-IN">Hindi (हिंदी)</option>
+                <option value="te-IN">Telugu (తెలుగు)</option>
+                <option value="ta-IN">Tamil (தமிழ்)</option>
+                <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                <option value="mr-IN">Marathi (मराठी)</option>
+                <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                <option value="bn-IN">Bengali (বাংলা)</option>
+                <option value="ml-IN">Malayalam (മലയാളം)</option>
+                <option value="en-IN">English</option>
+              </select>
+            </div>
+            <button class="btn btn-outline-success btn-sm" onclick="useVoiceText()"><i class="fa fa-search me-1"></i>Search Crops</button>
+            <button class="btn btn-outline-primary btn-sm" onclick="clearVoice()"><i class="fa fa-trash me-1"></i>Clear</button>
+          </div>
+        </div>
+
+        <!-- Recent Listings -->
+        <div class="col-md-6">
+          <div class="voice-box">
+            <h5 class="fw-bold mb-3"><i class="fa fa-seedling text-success me-2"></i>Recent Crop Listings</h5>
+            <% if(recentListings.length > 0) { %>
+              <% recentListings.forEach(l => { %>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                  <div>
+                    <div class="fw-semibold"><%= l.title %></div>
+                    <small class="text-muted"><%= l.typeofcrop || 'General' %> · <%= l.season || '-' %></small>
+                  </div>
+                  <div>
+                    <span class="badge bg-success">₹<%= l.price || 'N/A' %></span>
+                    <a href="/croplistings/<%= l._id %>" class="btn btn-sm btn-outline-success ms-2">View</a>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <p class="text-muted">No listings yet.</p>
+            <% } %>
+            <a href="/croplistings" class="btn btn-success btn-sm mt-3">View All Listings</a>
+          </div>
+        </div>
+
+        <!-- Recent Schemes -->
+        <div class="col-12">
+          <div class="voice-box">
+            <h5 class="fw-bold mb-3"><i class="fa fa-file-alt text-warning me-2"></i>Latest Government Schemes</h5>
+            <div class="row g-3">
+              <% if(recentSchemes.length > 0) { %>
+                <% recentSchemes.forEach(s => { %>
+                  <div class="col-md-4">
+                    <div class="card border-0 bg-light h-100">
+                      <div class="card-body">
+                        <h6 class="fw-bold"><%= s.title || s.name || 'Scheme' %></h6>
+                        <p class="small text-muted"><%= (s.description || '').substring(0,80) %>...</p>
+                        <a href="/schemes" class="btn btn-sm btn-outline-warning">Learn More</a>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="col-12"><p class="text-muted">No schemes listed yet.</p></div>
+              <% } %>
+            </div>
+            <a href="/schemes" class="btn btn-warning btn-sm mt-3">View All Schemes</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let recognition = null;
+let isRecording = false;
+
+function toggleRecording() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+    return;
+  }
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  const selectedLang = document.getElementById('langSelect').value;
+  recognition.lang = selectedLang || 'en-IN';
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micIcon').className = 'fa fa-stop';
+    document.getElementById('micStatus').textContent = 'Listening... Speak now';
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    document.getElementById('voiceText').value = transcript;
+    if (!selectedLang) {
+      const langEl = document.getElementById('detectedLang');
+      langEl.classList.remove('d-none');
+      langEl.textContent = '🌐 Auto-detected language';
+    }
+  };
+
+  recognition.onerror = (event) => {
+    document.getElementById('micStatus').textContent = 'Error: ' + event.error;
+    stopRecording();
+  };
+
+  recognition.onend = () => stopRecording();
+  recognition.start();
+}
+
+function stopRecording() {
+  isRecording = false;
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micIcon').className = 'fa fa-microphone';
+  document.getElementById('micStatus').textContent = 'Recording stopped. Text captured!';
+}
+
+function useVoiceText() {
+  const text = document.getElementById('voiceText').value.trim();
+  if (text) window.location.href = '/croplistings?search=' + encodeURIComponent(text);
+}
+
+function clearVoice() {
+  document.getElementById('voiceText').value = '';
+  document.getElementById('micStatus').textContent = 'Click mic to start';
+  document.getElementById('detectedLang').classList.add('d-none');
+}
+</script>
+</body>
+</html>

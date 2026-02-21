@@ -1,0 +1,41 @@
+<% layout('layouts/boilerplate') %>
+<body>
+    <h1><%= listing.title %></h1>
+    <img src="<%- listing.image || '/images/defaultcrop.jpg' %>" alt="<%= listing.title %>" style="max-width: 400px; height: auto;" onerror="this.onerror=null; this.src='/images/defaultcrop.jpg';" class="mb-3 show-img">
+    <p><strong>Price:</strong> <%= listing.price %>/Kg</p>
+<a href="/croplistings/<%= listing._id %>/edit" class="btn btn-success mt-2">
+  Update Price
+</a>
+
+    <p><strong>Type of Crop:</strong> <%= listing.typeofcrop %></p>
+   <table class="table table-bordered table-striped mt-3">
+  <tbody>
+    <tr>
+      <th scope="row">Soil Type</th>
+      <td><%= listing.soilType %></td>
+    </tr>
+    <tr>
+      <th scope="row">Watering Frequency</th>
+      <td><%= listing.frequency %></td>
+    </tr>
+    <tr>
+      <th scope="row">Best Season</th>
+      <td><%= listing.season %></td>
+    </tr>
+    <tr>
+      <th scope="row">Best Time of Day</th>
+      <td><%= listing.timeofday %></td>
+    </tr>
+    <tr>
+      <th scope="row">Suggestions</th>
+      <td><%= listing.suggestion %></td>
+    </tr>
+  </tbody>
+</table>
+
+
+    <br>
+
+</body>
+
+</html>

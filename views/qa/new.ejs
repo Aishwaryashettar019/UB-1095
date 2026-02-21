@@ -1,0 +1,90 @@
+<% layout('layouts/boilerplate2') %>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="fw-bold text-success mb-1">🌱 Ask a Question</h1>
+            <p class="text-muted mb-0">Asking as: <strong><%= user.username %></strong>
+              <span class="badge ms-1" style="background:<%= user.role==='expert'?'#6f42c1':user.role==='admin'?'#dc3545':'#2a8a15' %>; color:white;"><%= user.role.toUpperCase() %></span>
+            </p>
+          </div>
+          <a href="/qa" class="btn btn-outline-secondary">← Back to Q&A</a>
+        </div>
+
+        <!-- Voice Input Box -->
+        <div class="card border-0 shadow-sm mb-4" style="background:linear-gradient(135deg,#f0f7ee,#e8f5e9);">
+          <div class="card-body">
+            <h6 class="fw-bold text-success mb-2"><i class="fa fa-microphone me-2"></i>Voice Input — Any Language</h6>
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <button class="btn btn-success rounded-circle" style="width:50px;height:50px;font-size:1.2rem;" id="micBtn" onclick="toggleVoice()">
+                <i class="fa fa-microphone" id="micIcon"></i>
+              </button>
+              <select class="form-select form-select-sm" id="langSelect" style="max-width:180px;">
+                <option value="en-IN">English</option>
+                <option value="hi-IN">Hindi (हिंदी)</option>
+                <option value="te-IN">Telugu (తెలుగు)</option>
+                <option value="ta-IN">Tamil (தமிழ்)</option>
+                <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                <option value="mr-IN">Marathi (मराठी)</option>
+                <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+              </select>
+              <span id="voiceStatus" class="text-muted small">Tap mic and speak your question</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-success" onclick="applyToTitle()">→ Use as Title</button>
+              <button class="btn btn-sm btn-outline-primary" onclick="applyToDesc()">→ Use as Description</button>
+              <button class="btn btn-sm btn-outline-danger" onclick="clearVoice()">Clear</button>
+            </div>
+            <textarea id="voiceText" class="form-control mt-2" rows="2" placeholder="Voice text appears here..." readonly></textarea>
+          </div>
+        </div>
+
+        <!-- Question Form -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <form action="/qa" method="POST">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Question Title</label>
+                <input type="text" id="titleInput" name="title" class="form-control" placeholder="e.g., How often should I water wheat crops?" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea id="descInput" name="description" class="form-control" rows="4" placeholder="Describe your problem in detail..." required><%= prefill %></textarea>
+              </div>
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Tags <span class="text-muted fw-normal small">(comma-separated)</span></label>
+                <input type="text" name="tags" class="form-control" placeholder="soil, irrigation, fertilizer, pest">
+              </div>
+              <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">Submit Question</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+let recognition = null, isRecording = false;
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Voice input requires Chrome or Edge browser.'); return; }
+  if (isRecording) { recognition.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true;
+  recognition.lang = document.getElementById('langSelect').value;
+  recognition.onstart = () => { isRecording=true; document.getElementById('micBtn').style.background='#dc3545'; document.getElementById('micIcon').className='fa fa-stop'; document.getElementById('voiceStatus').textContent='🔴 Listening... Speak now'; };
+  recognition.onresult = (e) => { let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; document.getElementById('voiceText').value=t; };
+  recognition.onerror = () => stopRec();
+  recognition.onend = stopRec;
+  recognition.start();
+}
+function stopRec() { isRecording=false; document.getElementById('micBtn').style.background=''; document.getElementById('micIcon').className='fa fa-microphone'; document.getElementById('voiceStatus').textContent='Done! Apply text to a field above.'; }
+function applyToTitle() { document.getElementById('titleInput').value = document.getElementById('voiceText').value; }
+function applyToDesc() { document.getElementById('descInput').value = document.getElementById('voiceText').value; }
+function clearVoice() { document.getElementById('voiceText').value=''; document.getElementById('voiceStatus').textContent='Tap mic and speak your question'; }
+</script>
